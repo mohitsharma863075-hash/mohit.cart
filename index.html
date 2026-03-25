@@ -206,7 +206,24 @@
         display: flex;
         justify-content: center;
         height: 140px;
+        position: relative;
     }
+    .stock-badge {
+        position: absolute;
+        top: 8px;
+        left: 8px;
+        background: rgba(0,0,0,0.75);
+        color: white;
+        font-size: 0.65rem;
+        padding: 3px 8px;
+        border-radius: 20px;
+        font-weight: 600;
+        backdrop-filter: blur(4px);
+        z-index: 2;
+    }
+    .stock-badge.in-stock { background: #2c6e2f; }
+    .stock-badge.low-stock { background: #e67e22; }
+    .stock-badge.out-stock { background: #c0392b; }
     .card img {
         max-width: 100%;
         max-height: 100px;
@@ -242,6 +259,12 @@
         cursor: pointer;
         margin-top: 8px;
         font-size: 0.75rem;
+        transition: 0.2s;
+    }
+    .card button:disabled {
+        background: #aaa;
+        cursor: not-allowed;
+        opacity: 0.6;
     }
     .wishlist-icon {
         position: absolute;
@@ -257,6 +280,7 @@
         cursor: pointer;
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         transition: 0.2s;
+        z-index: 2;
     }
 
     .cart, .wishlist-sidebar {
@@ -301,7 +325,7 @@
     .glass-card {
         background: rgba(255,255,245,0.98);
         width: 90%;
-        max-width: 520px;
+        max-width: 500px;
         border-radius: 48px;
         padding: 30px 24px;
         box-shadow: 0 30px 50px rgba(0,0,0,0.3);
@@ -338,35 +362,11 @@
     .glass-card textarea {
         border-radius: 24px;
         resize: vertical;
-        min-height: 80px;
     }
     .glass-card input:focus, .glass-card textarea:focus {
         border-color: #ff7a18;
         outline: none;
         box-shadow: 0 0 0 3px rgba(255,122,24,0.2);
-    }
-    .address-group {
-        background: #fff8f0;
-        border-radius: 28px;
-        padding: 12px 16px;
-        margin: 10px 0;
-        text-align: left;
-    }
-    .address-group label {
-        font-size: 0.75rem;
-        font-weight: 600;
-        color: #ff7a18;
-        display: block;
-        margin-bottom: 5px;
-    }
-    .address-row {
-        display: flex;
-        gap: 12px;
-        flex-wrap: wrap;
-    }
-    .address-row input {
-        flex: 1;
-        margin: 5px 0;
     }
     .btn-primary {
         background: linear-gradient(95deg, #ff7a18, #ff4d4d);
@@ -537,6 +537,11 @@
         display: block;
         margin-bottom: 5px;
     }
+    .username-section input {
+        margin-top: 0;
+        margin-bottom: 0;
+        background: white;
+    }
     .edit-name-btn {
         background: rgba(255,122,24,0.2);
         border: none;
@@ -547,20 +552,20 @@
         margin-left: 10px;
         transition: 0.2s;
     }
-    .delivery-address-preview {
-        background: #fff0e6;
-        border-radius: 20px;
-        padding: 12px;
-        margin: 10px 0;
-        font-size: 0.8rem;
-        text-align: left;
+    .edit-name-btn:hover {
+        background: #ff7a18;
+        color: white;
+    }
+    .full-address-preview {
+        font-size: 0.75rem;
+        color: #555;
+        margin-top: 4px;
     }
     @media (max-width: 550px) {
         .products { grid-template-columns: repeat(2, 1fr); gap: 12px; }
         .cart, .wishlist-sidebar { width: 95%; max-width: 380px; padding: 18px; }
         .logo img { height: 40px; }
         .logo h2 { font-size: 1rem; }
-        .address-row { flex-direction: column; gap: 0; }
     }
 </style>
 </head>
@@ -577,150 +582,115 @@
         <button class="cart-btn" id="cartToggleBtn"><i class="fas fa-shopping-bag"></i> <span id="cartCount">0</span></button>
     </div>
 </header>
+<div class="delivery-banner"><i class="fas fa-bolt"></i> <span id="deliveryMsg">🇮🇳 DELIVERING TO 2000+ CITIES</span></div>
 
 <div class="search-section">
     <div class="search-container">
-        <i class="fas fa-search" style="position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: #ff7a18;"></i>
+        <i class="fas fa-search" style="position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: #ff7a18; font-size: 1rem;"></i>
         <input type="text" id="searchInput" placeholder="Search sweets, biscuits, beverages..." autocomplete="off">
-        <button class="search-clear" id="searchClearBtn">×</button>
+        <button class="search-clear" id="searchClearBtn" onclick="clearSearch()">×</button>
     </div>
 </div>
 
 <div class="categories-section"><div class="categories-container" id="categoriesContainer"></div></div>
 <div class="products" id="productList"></div>
 
-<div id="wishlistSidebar" class="wishlist-sidebar"><button onclick="toggleWishlist()" style="float:right; background:none; border:none; font-size:1.5rem;">&times;</button><h3><i class="fas fa-heart" style="color:#ff7a18;"></i> <span id="wishlistTitle">My Wishlist</span></h3><div id="wishlistItems"></div></div>
+<div id="wishlistSidebar" class="wishlist-sidebar"><button onclick="toggleWishlist()" style="float:right; background:none; border:none; font-size:1.5rem; cursor:pointer;">&times;</button><h3><i class="fas fa-heart" style="color:#ff7a18;"></i> <span id="wishlistTitle">My Wishlist</span></h3><div id="wishlistItems"></div></div>
 
-<div id="cart" class="cart"><button onclick="toggleCart()" style="float:right; background:none; border:none; font-size:1.5rem;">&times;</button><h3><i class="fas fa-shopping-cart"></i> <span id="cartTitle">Your Cart</span></h3><div id="cartItems"></div><div class="cart-total" style="margin-top:20px; background:#2c2c2c; padding:15px; border-radius:24px; color:white;"><span id="totalLabel">Total</span>: ₹<span id="total">0</span></div><button class="checkout-btn" id="proceedBtn" onclick="proceedToPayment()" style="background:#1e7e34; width:100%; padding:14px; border-radius:50px; margin-top:15px; font-weight:bold;">PROCEED</button></div>
+<div id="cart" class="cart"><button onclick="toggleCart()" style="float:right; background:none; border:none; font-size:1.5rem; cursor:pointer;">&times;</button><h3><i class="fas fa-shopping-cart"></i> <span id="cartTitle">Your Cart</span></h3><div id="cartItems"></div><div class="cart-total" style="margin-top:20px; background:#2c2c2c; padding:15px; border-radius:24px; color:white; font-size:1.1rem;"><span id="totalLabel">Total</span>: ₹<span id="total">0</span></div><button class="checkout-btn" id="proceedBtn" onclick="proceedToPayment()" style="background:#1e7e34; width:100%; padding:14px; border-radius:50px; margin-top:15px; font-size:1rem; font-weight:bold;">PROCEED</button></div>
 
-<div id="productDetailModal" class="modern-modal"><div class="glass-card"><div style="display:flex; justify-content:space-between;"><h2 id="productDetailTitle">Product Details</h2><button onclick="closeProductModal()" style="background:none; border:none; font-size:2rem;">&times;</button></div><div id="productModalBody"></div></div></div>
+<div id="productDetailModal" class="modern-modal"><div class="glass-card" style="padding:24px;"><div style="display:flex; justify-content:space-between; align-items:center;"><h2 id="productDetailTitle">Product Details</h2><button onclick="closeProductModal()" style="background:none; border:none; font-size:2rem; cursor:pointer;">&times;</button></div><div id="productModalBody"></div></div></div>
 
 <div id="paymentModal" class="modern-modal"><div class="glass-card"><h2 id="paymentTitle">💳 Secure Payment</h2><div id="paymentSummary"></div><div class="payment-methods"><div class="payment-option" data-method="upi">📱 UPI (9258895817@ibl)</div><div class="payment-option" data-method="cod">💰 Cash on Delivery</div></div><div id="upiInput" style="display:none;"><p style="font-size:0.8rem; color:#ff7a18;">Pay to: 9258895817@ibl (Mohit)</p><input type="text" id="upiReference" placeholder="UPI Transaction ID / Reference"></div><button id="confirmPayBtn" class="btn-primary">Pay & Place Order</button><button onclick="closePaymentModal()" class="btn-outline">Cancel</button></div></div>
 
-<div id="trackModal" class="modern-modal"><div class="glass-card"><h3 id="trackOrderId">Order #</h3><div id="trackStepsContainer" class="track-steps"></div><div id="trackMessage" style="margin:15px 0;"></div><button onclick="closeTrackModal()" class="btn-outline">Close</button></div></div>
+<div id="trackModal" class="modern-modal"><div class="glass-card"><h3 id="trackOrderId">Order #</h3><div id="trackStepsContainer" class="track-steps"></div><div id="trackMessage" style="margin:15px 0; font-weight:500;"></div><button onclick="closeTrackModal()" class="btn-outline">Close</button></div></div>
 
 <div id="authModal" class="modern-modal"><div class="glass-card" id="authModalContent"></div></div>
 
-<!-- FULL ADDRESS MODAL WITH LANDMARK, CITY, PINCODE, AREA -->
-<div id="locationModal" class="modern-modal">
-    <div class="glass-card">
-        <h2 id="locationModalTitle"><i class="fas fa-map-marker-alt"></i> Complete Address</h2>
-        <div class="address-group">
-            <label><i class="fas fa-road"></i> House/Flat No. & Building *</label>
-            <input type="text" id="fullAddressLine" placeholder="e.g., 123, Green Apartments, Near Park" autocomplete="off">
-            
-            <label><i class="fas fa-location-dot"></i> Area / Colony / Street *</label>
-            <input type="text" id="areaStreet" placeholder="e.g., Sector 15, Main Market Road">
-            
-            <div class="address-row">
-                <div style="flex:2"><label><i class="fas fa-city"></i> City / Town *</label>
-                <input type="text" id="cityInput" placeholder="e.g., Delhi, Mumbai"></div>
-                <div style="flex:1"><label><i class="fas fa-code"></i> Pincode *</label>
-                <input type="text" id="pincodeInput" placeholder="110001" maxlength="6"></div>
-            </div>
-            
-            <label><i class="fas fa-flag"></i> Landmark (Optional)</label>
-            <input type="text" id="landmarkInput" placeholder="e.g., Near Metro Station, Opposite Temple">
-            
-            <label><i class="fas fa-phone-alt"></i> Phone (for delivery)</label>
-            <input type="tel" id="deliveryPhone" placeholder="Mobile number" maxlength="10">
-        </div>
-        <div class="location-suggest" id="locationSuggestions"></div>
-        <button id="saveLocationBtn" class="btn-primary"><i class="fas fa-check-circle"></i> Save Full Address</button>
-        <button id="useCurrentLocationBtn" class="btn-outline"><i class="fas fa-location-dot"></i> Use Current Location</button>
-    </div>
-</div>
+<!-- Enhanced Location Modal with FULL ADDRESS + LANDMARK -->
+<div id="locationModal" class="modern-modal"><div class="glass-card"><h2 id="locationModalTitle"><i class="fas fa-map-marker-alt"></i> Full Address</h2><input type="text" id="locationInput" placeholder="City / Area (e.g., Bhatipura)" autocomplete="off"><textarea id="landmarkInput" rows="2" placeholder="Landmark / Full Address (Near Temple, House No., Street, Sector)" style="margin:8px 0;"></textarea><div class="location-suggest" id="locationSuggestions"></div><button id="saveLocationBtn" class="btn-primary">Save Full Address</button><button id="useCurrentLocationBtn" class="btn-outline">Use Current Location</button></div></div>
 
 <script>
-    // ==================== FULL ADDRESS SYSTEM ====================
-    let fullAddress = {
-        line1: "",
-        area: "",
-        city: "",
-        pincode: "",
-        landmark: "",
-        phone: ""
-    };
+    // ==================== REAL-TIME STOCK SYSTEM ====================
+    let productStock = {};
+    const LOW_STOCK_THRESHOLD = 3;
     
-    // Load saved full address
-    function loadSavedAddress() {
-        let saved = localStorage.getItem("userFullAddress");
+    function initStock() {
+        products.forEach(p => {
+            if(!productStock[p.id]) {
+                let randomQty = Math.floor(Math.random() * 12);
+                productStock[p.id] = { qty: randomQty, status: randomQty === 0 ? "out-stock" : (randomQty <= LOW_STOCK_THRESHOLD ? "low-stock" : "in-stock") };
+            }
+        });
+        localStorage.setItem("productStock", JSON.stringify(productStock));
+    }
+    
+    function getStockStatus(productId) {
+        let stock = productStock[productId];
+        if(!stock) return { qty: 5, status: "in-stock" };
+        return stock;
+    }
+    
+    function canAddToCart(productId) {
+        let stock = getStockStatus(productId);
+        return stock.status !== "out-stock";
+    }
+    
+    function updateStockAfterOrder(cartItems) {
+        cartItems.forEach(item => {
+            if(productStock[item.id]) {
+                let newQty = Math.max(0, productStock[item.id].qty - item.qty);
+                productStock[item.id].qty = newQty;
+                productStock[item.id].status = newQty === 0 ? "out-stock" : (newQty <= LOW_STOCK_THRESHOLD ? "low-stock" : "in-stock");
+            }
+        });
+        localStorage.setItem("productStock", JSON.stringify(productStock));
+    }
+    
+    // ==================== FULL ADDRESS WITH LANDMARK ====================
+    let fullAddress = { city: "", landmark: "" };
+    
+    function loadFullAddress() {
+        let saved = localStorage.getItem("fullAddressDetails");
         if(saved) {
             try {
                 fullAddress = JSON.parse(saved);
-                document.getElementById("fullAddressLine").value = fullAddress.line1 || "";
-                document.getElementById("areaStreet").value = fullAddress.area || "";
-                document.getElementById("cityInput").value = fullAddress.city || "";
-                document.getElementById("pincodeInput").value = fullAddress.pincode || "";
-                document.getElementById("landmarkInput").value = fullAddress.landmark || "";
-                document.getElementById("deliveryPhone").value = fullAddress.phone || (currentUser ? currentUser.mobile : "");
-                updateDeliveryBanner();
+                userLocation = fullAddress.city || "";
+                locationValid = isLocationServiceable(userLocation);
+                localStorage.setItem("userDeliveryLocation", userLocation);
+                localStorage.setItem("locationValid", locationValid);
             } catch(e) {}
         }
-        if(currentUser && !fullAddress.phone) {
-            document.getElementById("deliveryPhone").value = currentUser.mobile || "";
-        }
+        let locInput = document.getElementById("locationInput");
+        let landmarkInput = document.getElementById("landmarkInput");
+        if(locInput) locInput.value = fullAddress.city || "";
+        if(landmarkInput) landmarkInput.value = fullAddress.landmark || "";
     }
     
     function saveFullAddress() {
-        let line1 = document.getElementById("fullAddressLine").value.trim();
-        let area = document.getElementById("areaStreet").value.trim();
-        let city = document.getElementById("cityInput").value.trim();
-        let pincode = document.getElementById("pincodeInput").value.trim();
+        let city = document.getElementById("locationInput").value.trim();
         let landmark = document.getElementById("landmarkInput").value.trim();
-        let phone = document.getElementById("deliveryPhone").value.trim();
-        
-        if(!line1) { showToast("Please enter house/flat number & building", true); return false; }
-        if(!area) { showToast("Please enter area / colony", true); return false; }
-        if(!city) { showToast("Please enter city name", true); return false; }
-        if(!pincode || pincode.length < 5) { showToast("Enter valid pincode (6 digits)", true); return false; }
-        
-        fullAddress = { line1, area, city, pincode, landmark, phone };
-        localStorage.setItem("userFullAddress", JSON.stringify(fullAddress));
-        
-        // Also store legacy location for compatibility
-        let locationStr = `${line1}, ${area}, ${city} - ${pincode}`;
-        if(landmark) locationStr += ` (Landmark: ${landmark})`;
-        userLocation = locationStr;
-        locationValid = true;
-        localStorage.setItem("userDeliveryLocation", locationStr);
-        localStorage.setItem("locationValid", "true");
-        
+        if(!city) { showToast("Please enter city/area", true); return false; }
+        fullAddress = { city: city, landmark: landmark };
+        userLocation = city;
+        locationValid = isLocationServiceable(city);
+        localStorage.setItem("fullAddressDetails", JSON.stringify(fullAddress));
+        localStorage.setItem("userDeliveryLocation", userLocation);
+        localStorage.setItem("locationValid", locationValid);
         updateDeliveryBanner();
-        showToast(`✅ Address saved: ${city}`, false);
+        showToast(`📍 Address saved: ${getFormattedAddress()}`, false);
         closeLocationModal();
         return true;
     }
     
     function getFormattedAddress() {
-        let parts = [];
-        if(fullAddress.line1) parts.push(fullAddress.line1);
-        if(fullAddress.area) parts.push(fullAddress.area);
-        if(fullAddress.city) parts.push(fullAddress.city);
-        if(fullAddress.pincode) parts.push(fullAddress.pincode);
-        if(fullAddress.landmark) parts.push(`Landmark: ${fullAddress.landmark}`);
-        return parts.join(", ");
+        if(!fullAddress.city) return "Location not set";
+        return fullAddress.landmark ? `${fullAddress.city} (${fullAddress.landmark})` : fullAddress.city;
     }
     
-    // Update delivery banner with address preview
-    function updateDeliveryBanner() {
-        let msgSpan = document.getElementById("deliveryMsg");
-        let locSpan = document.getElementById("locationLabel");
-        if(fullAddress.city && fullAddress.line1) {
-            let shortAddr = `${fullAddress.city}${fullAddress.pincode ? " - "+fullAddress.pincode : ""}`;
-            msgSpan.innerHTML = `📍 ${shortAddr} • 15 MIN DELIVERY`;
-            locSpan.innerHTML = fullAddress.city.substring(0,12);
-        } else if(userLocation && locationValid) {
-            msgSpan.innerHTML = `${t("deliveryMsg")} • ${userLocation.substring(0,20)}`;
-            locSpan.innerHTML = userLocation.substring(0,10);
-        } else {
-            msgSpan.innerHTML = t("deliveryMsg");
-            locSpan.innerHTML = t("locationLabel");
-        }
-    }
-    
-    // Rest of the existing code with address integration
+    // ==================== CONFIGURATION ====================
     const WHATSAPP_ADMIN_NUMBER = "919258895817";
+    
     let currentLang = "en";
     let profileActiveTab = "profile";
     let tempOtpData = { otp: null, identifier: null, expiry: null, tempUsername: null };
@@ -734,10 +704,10 @@
             wishlistTitle: "My Wishlist", cartTitle: "Your Cart", totalLabel: "Total", proceedBtn: "PROCEED",
             emptyCart: "Cart empty", emptyWishlist: "❤️ Empty", addToCart: "Add", addToWishlist: "Add", remove: "Remove",
             loginTitle: "Login with OTP", logout: "Logout", close: "Close", paymentTitle: "💳 Secure Payment", 
-            cancel: "Cancel", productDetails: "Product Details", locationTitle: "Delivery Location",
-            saveLocation: "Save & Deliver Here", useCurrent: "Use Current Location", loginRequired: "Please login first!",
-            cartEmptyMsg: "Cart empty", locationRequired: "Set delivery location", selectPayment: "Select payment method",
-            orderPlaced: "Order placed! WhatsApp alert sent to admin", addedToCart: "added to cart", removed: "Removed",
+            cancel: "Cancel", productDetails: "Product Details", locationTitle: "Full Delivery Address",
+            saveLocation: "Save Full Address", useCurrent: "Use Current Location", loginRequired: "Please login first!",
+            cartEmptyMsg: "Cart empty", locationRequired: "Set delivery address", selectPayment: "Select payment method",
+            orderPlaced: "Order placed! WhatsApp alert sent", addedToCart: "added to cart", removed: "Removed",
             welcome: "Welcome", accountCreated: "Account created!", locationSet: "Delivering to",
             trackingSteps: ["Placed", "Packed", "Out for Delivery", "Delivered"],
             trackMsg1: "✅ Order confirmed! Preparing your items...", trackMsg2: "📦 Packed and ready for dispatch",
@@ -746,7 +716,7 @@
             mobileNumber: "Mobile Number", sendOtp: "Send OTP", verifyOtp: "Verify & Login", enterOtp: "Enter 6-digit OTP", 
             resendOtp: "Resend OTP", otpSent: "OTP sent successfully!", otpError: "Failed to send OTP", invalidOtp: "Invalid OTP", 
             otpExpired: "OTP expired. Please resend.", enterUsername: "Enter Your Name", usernameHelp: "Skip to use phone number as name",
-            editName: "Edit", saveName: "Save", cancelEdit: "Cancel", nameUpdated: "Name updated successfully!"
+            editName: "Edit", saveName: "Save", cancelEdit: "Cancel", nameUpdated: "Name updated successfully!", outOfStock: "Out of Stock", lowStock: "Only few left"
         },
         hi: {
             locationLabel: "स्थान सेट करें", profileLabel: "लॉगिन", deliveryMsg: "🇮🇳 2000+ शहरों में डिलीवरी",
@@ -755,10 +725,10 @@
             wishlistTitle: "मेरी विशलिस्ट", cartTitle: "आपका कार्ट", totalLabel: "कुल", proceedBtn: "आगे बढ़ें",
             emptyCart: "कार्ट खाली है", emptyWishlist: "❤️ खाली", addToCart: "जोड़ें", addToWishlist: "जोड़ें", remove: "हटाएं",
             loginTitle: "OTP से लॉगिन करें", logout: "लॉगआउट", close: "बंद करें", paymentTitle: "💳 सुरक्षित भुगतान", 
-            cancel: "रद्द करें", productDetails: "उत्पाद विवरण", locationTitle: "डिलीवरी स्थान",
-            saveLocation: "यहां सेव करें", useCurrent: "मौजूदा स्थान उपयोग करें", loginRequired: "कृपया पहले लॉगिन करें!",
-            cartEmptyMsg: "कार्ट खाली है", locationRequired: "डिलीवरी स्थान सेट करें", selectPayment: "भुगतान विधि चुनें",
-            orderPlaced: "ऑर्डर हो गया! एडमिन को व्हाट्सएप अलर्ट भेजा गया", addedToCart: "कार्ट में जोड़ा गया", removed: "हटा दिया गया",
+            cancel: "रद्द करें", productDetails: "उत्पाद विवरण", locationTitle: "पूरा पता (लैंडमार्क सहित)",
+            saveLocation: "पूरा पता सेव करें", useCurrent: "मौजूदा स्थान उपयोग करें", loginRequired: "कृपया पहले लॉगिन करें!",
+            cartEmptyMsg: "कार्ट खाली है", locationRequired: "डिलीवरी पता सेट करें", selectPayment: "भुगतान विधि चुनें",
+            orderPlaced: "ऑर्डर हो गया! एडमिन को अलर्ट भेजा गया", addedToCart: "कार्ट में जोड़ा गया", removed: "हटा दिया गया",
             welcome: "स्वागत है", accountCreated: "खाता बन गया!", locationSet: "डिलीवरी होगी",
             trackingSteps: ["ऑर्डर हुआ", "पैक हुआ", "डिलीवरी पर", "डिलीवर हो गया"],
             trackMsg1: "✅ ऑर्डर कन्फर्म! आपका सामान तैयार किया जा रहा...", trackMsg2: "📦 पैक हो गया, डिस्पैच के लिए तैयार",
@@ -767,7 +737,7 @@
             mobileNumber: "मोबाइल नंबर", sendOtp: "OTP भेजें", verifyOtp: "वेरिफाई करें", enterOtp: "6 अंकों का OTP डालें",
             resendOtp: "OTP पुनः भेजें", otpSent: "OTP सफलतापूर्वक भेजा गया!", otpError: "OTP भेजने में विफल", invalidOtp: "गलत OTP",
             otpExpired: "OTP समाप्त हो गया। कृपया पुनः भेजें।", enterUsername: "अपना नाम दर्ज करें", usernameHelp: "छोड़ें तो फ़ोन नंबर नाम के रूप में उपयोग होगा",
-            editName: "बदलें", saveName: "सेव करें", cancelEdit: "रद्द करें", nameUpdated: "नाम सफलतापूर्वक अपडेट किया गया!"
+            editName: "बदलें", saveName: "सेव करें", cancelEdit: "रद्द करें", nameUpdated: "नाम सफलतापूर्वक अपडेट किया गया!", outOfStock: "स्टॉक खत्म", lowStock: "कुछ ही बचे"
         }
     };
     
@@ -805,14 +775,14 @@
         document.getElementById("productDetailTitle").innerText = t("productDetails");
         document.getElementById("paymentTitle").innerHTML = t("paymentTitle");
         document.getElementById("confirmPayBtn").innerText = t("proceedBtn");
-        document.getElementById("locationModalTitle").innerHTML = `<i class="fas fa-map-marker-alt"></i> Complete Address`;
-        document.getElementById("saveLocationBtn").innerHTML = `<i class="fas fa-check-circle"></i> ${t("saveLocation")}`;
-        document.getElementById("useCurrentLocationBtn").innerHTML = `<i class="fas fa-location-dot"></i> ${t("useCurrent")}`;
+        document.getElementById("locationModalTitle").innerHTML = `<i class="fas fa-map-marker-alt"></i> ${t("locationTitle")}`;
+        document.getElementById("saveLocationBtn").innerText = t("saveLocation");
+        document.getElementById("useCurrentLocationBtn").innerText = t("useCurrent");
     }
     
     async function sendOrderToWhatsApp(orderDetails) {
-        const { orderId, customerName, customerPhone, itemsList, total, address, paymentMethod } = orderDetails;
-        const message = `🛍️ *NEW ORDER FROM EASY CART* 🛍️\n\n*Order ID:* ${orderId}\n*Customer:* ${customerName}\n*Phone:* ${customerPhone}\n*Full Address:* ${address}\n*Payment:* ${paymentMethod}\n\n*ITEMS:*\n${itemsList}\n\n*TOTAL:* ₹${total}\n*Time:* ${new Date().toLocaleString('en-IN')}\n\n🔔 *Please process the order.*`;
+        const { orderId, customerName, customerPhone, itemsList, total, fullAddr, paymentMethod } = orderDetails;
+        const message = `🛍️ *NEW ORDER FROM EASY CART* 🛍️\n\n*Order ID:* ${orderId}\n*Customer:* ${customerName}\n*Phone:* ${customerPhone}\n*Full Address:* ${fullAddr}\n*Payment:* ${paymentMethod}\n\n*ITEMS:*\n${itemsList}\n\n*TOTAL:* ₹${total}\n*Time:* ${new Date().toLocaleString('en-IN')}\n\n🔔 *Please process the order.*`;
         const whatsappUrl = `https://wa.me/${WHATSAPP_ADMIN_NUMBER}?text=${encodeURIComponent(message)}`;
         window.open(whatsappUrl, '_blank');
         return true;
@@ -829,7 +799,7 @@
     }
     
     const products = [
-{id:1, name:"Aam Papad Chatpata", price:1, category:"snacks", image:"images/Aam.png", deliveryTime:"15 min", description:"Tangy and spicy aam papad, perfect for instant cravings. Made with real mango pulp."},
+       {id:1, name:"Aam Papad Chatpata", price:1, category:"snacks", image:"images/Aam.png", deliveryTime:"15 min", description:"Tangy and spicy aam papad, perfect for instant cravings. Made with real mango pulp."},
         {id:2, name:"Aam Papad", price:1, category:"snacks", image:"images/Aam Papad.jpg", deliveryTime:"15 min", description:"Classic sweet aam papad, traditional Indian mango fruit roll."},
         {id:3, name:"AAM PACHAN", price:1, category:"snacks", image:"images/AAM PACHAN.jpg", deliveryTime:"15 min", description:"Digestive candy with aam and herbs, helps after meals."},
         {id:4, name:"Anardana", price:1, category:"snacks", image:"images/Anardana.jpg", deliveryTime:"15 min", description:"Pomegranate seed candy, tangy and refreshing."},
@@ -883,7 +853,7 @@
         {id:52, name:"CAMPA COLA ENERGY DRINK", price:30, category:"beverages", image:"images/CAMPA COLA ENERGY.jpg", deliveryTime:"15 min" , description:"Energy drink with caffeine, boosts energy."},
         {id:53, name:"MOUNTAIN DEW CAN", price:30, category:"beverages", image:"images/MOUNTAIN DEW CAN.jpg", deliveryTime:"15 min", description:"Citrus flavored soda, extreme refreshment."},
         {id:54, name:"THUMS UP CAN", price:30, category:"beverages", image:"images/THUMS UP CAN.JPG", deliveryTime:"15 min", description:"Citrus flavored soda, extreme refreshment."},
-        {id:55, name:"7 UP CAN", price:30, category:"beverages", image:"images/7 UP CAN.jpg", deliveryTime:"15 min", description:"Lemon lime flavored soda, refreshing and crisp."},
+        {id:55, name:"7 UP CAN", price:30, category:"beverages", image:"images/7 UP  CAN.JPG", deliveryTime:"15 min", description:"Lemon lime flavored soda, refreshing and crisp."},
         {id:52, name:"LIMCA CAN", price:30, category:"beverages", image:"images/LIMCA CAN.png", deliveryTime:"15 min", description:"Citrus flavored soda, extreme refreshment."},
     ];
     
@@ -897,7 +867,7 @@
         {id:"dairy", name:"dairy", icon:"fa-cheese"}
     ];
     
-    const allIndianLocations = ["Bhatipura","Maukhas","Patti Kherki","Ameharasani","Kayastha Badha","Hasanpur Kalan","Meghrajpur","Amarpur Maza Khandawli","Machhra","Bhagwanpur Chittawan","Sisoli"];
+    const allIndianLocations = ["Bhatipura","Maukhas","Patti Kherki","Ameharasani","Kayastha Badha","Hasanpur Kalan","Meghrajpur","Amarpur Maza Khandawli","Machhra","Bhagwanpur Chittawan","Sisoli","Delhi","Mumbai","Lucknow","Kanpur"];
     
     let currentCategory = "all";
     let currentUser = localStorage.getItem("currentUser") ? JSON.parse(localStorage.getItem("currentUser")) : null;
@@ -909,22 +879,12 @@
     let locationValid = localStorage.getItem("locationValid") === "true";
     let searchQuery = "";
     
-    // Load saved full address on start
-    setTimeout(() => { if(document.getElementById("fullAddressLine")) loadSavedAddress(); }, 100);
-    
     function showToast(msg, isErr=false) { 
         let t=document.querySelector(".toast-msg"); if(t) t.remove(); 
         let toast=document.createElement("div"); toast.className="toast-msg"; 
         toast.innerHTML=`<i class="fas ${isErr?'fa-exclamation-triangle':'fa-check-circle'}"></i> ${msg}`; 
         toast.style.background=isErr?"#c0392b":"#2c6e2f"; document.body.appendChild(toast); 
         setTimeout(()=>toast.remove(),2800); 
-    }
-    
-    function sendEmailOrder(orderId, customerName, customerEmail, itemsList, total, address) {
-        let subject = encodeURIComponent(`🛍️ New Order #${orderId} from Easy Cart`);
-        let body = encodeURIComponent(`✨ NEW ORDER DETAILS ✨\n\nOrder ID: ${orderId}\nCustomer: ${customerName}\nContact: ${customerEmail}\nFull Address: ${address}\n\nITEMS:\n${itemsList}\n\nTOTAL: ₹${total}\nTime: ${new Date().toLocaleString()}`);
-        window.open(`mailto:mohitsharma863075@gmail.com?subject=${subject}&body=${body}`, '_blank');
-        return true;
     }
     
     function toggleWishlist() { let w=document.getElementById("wishlistSidebar"); w.style.display=w.style.display==="block"?"none":"block"; renderWishlist(); }
@@ -968,22 +928,29 @@
         let container=document.getElementById("productList"); container.innerHTML=""; 
         if(filtered.length===0){ container.innerHTML="<div style='text-align:center;padding:40px;'>No products</div>"; return; }
         filtered.forEach(p=>{ 
+            let stock = getStockStatus(p.id);
+            let stockText = stock.status === "out-stock" ? t("outOfStock") : (stock.status === "low-stock" ? `⚠️ ${t("lowStock")} (${stock.qty})` : `✅ In Stock`);
+            let stockClass = stock.status;
+            let disabledAttr = !canAddToCart(p.id) ? 'disabled' : '';
             let card=document.createElement("div"); card.className="card"; 
             card.onclick=(e)=>{ if(e.target.tagName!=='BUTTON' && !e.target.closest('.wishlist-icon')) openProductDetail(p); };
-            card.innerHTML=`<div class="img-wrapper"><img src="${p.image}" onerror="this.src='https://via.placeholder.com/100?text=Product'"></div><div class="card-content"><h3>${p.name.length>20?p.name.slice(0,18)+'..':p.name}</h3><div class="price">₹${p.price}</div><div class="delivery-time"><i class="fas fa-bolt"></i> ${p.deliveryTime}</div><button onclick="event.stopPropagation(); addToCart(${p.id})"><i class="fas fa-cart-plus"></i> ${t("addToCart")}</button></div><div class="wishlist-icon" onclick="event.stopPropagation(); addToWishlist(${p.id})"><i class="fas fa-heart" style="color:${isInWishlist(p.id)?'#e63946':'#ff7a18'}; font-size:1.1rem;"></i></div>`; 
+            card.innerHTML=`<div class="img-wrapper"><div class="stock-badge ${stockClass}">${stockText}</div><img src="${p.image}" onerror="this.src='https://via.placeholder.com/100?text=Product'"></div><div class="card-content"><h3>${p.name.length>20?p.name.slice(0,18)+'..':p.name}</h3><div class="price">₹${p.price}</div><div class="delivery-time"><i class="fas fa-bolt"></i> ${p.deliveryTime}</div><button onclick="event.stopPropagation(); addToCart(${p.id})" ${disabledAttr}><i class="fas fa-cart-plus"></i> ${t("addToCart")}</button></div><div class="wishlist-icon" onclick="event.stopPropagation(); addToWishlist(${p.id})"><i class="fas fa-heart" style="color:${isInWishlist(p.id)?'#e63946':'#ff7a18'}; font-size:1.1rem;"></i></div>`; 
             container.appendChild(card); 
         }); 
     }
     
     function openProductDetail(p) { 
+        let stock = getStockStatus(p.id);
+        let stockMsg = stock.status === "out-stock" ? "❌ Out of Stock" : (stock.status === "low-stock" ? `⚠️ Only ${stock.qty} left!` : "✅ In Stock");
         let modalBody=document.getElementById("productModalBody"); 
-        modalBody.innerHTML=`<img src="${p.image}" style="width:100%;max-height:160px;object-fit:contain;margin:10px 0;"><h3>${p.name}</h3><div class="price" style="font-size:1.3rem;">₹${p.price}</div><p>${p.description}</p><button class="btn-primary" onclick="addToCart(${p.id}); closeProductModal();">${t("addToCart")}</button>`; 
+        modalBody.innerHTML=`<img src="${p.image}" style="width:100%;max-height:160px;object-fit:contain;margin:10px 0;"><h3>${p.name}</h3><div class="price" style="font-size:1.3rem;">₹${p.price}</div><p>${p.description || "Delicious product"}</p><p style="background:#fff0e6;padding:8px;border-radius:20px;">📦 ${stockMsg}</p><button class="btn-primary" onclick="addToCart(${p.id}); closeProductModal();" ${!canAddToCart(p.id)?"disabled":""}>${t("addToCart")}</button>`; 
         document.getElementById("productDetailModal").classList.add("active"); 
     }
     function closeProductModal() { document.getElementById("productDetailModal").classList.remove("active"); }
     
     function addToCart(id) { 
         if(!currentUser){ showToast(t("loginRequired"), true); openAuthModal(); return; } 
+        if(!canAddToCart(id)){ showToast(t("outOfStock"), true); return; }
         let product=products.find(p=>p.id===id); 
         let existing=cart.find(i=>i.id===id); 
         if(existing) existing.qty+=1; else cart.push({...product,qty:1}); 
@@ -1004,14 +971,9 @@
     function proceedToPayment() { 
         if(!currentUser){ showToast(t("loginRequired"), true); openAuthModal(); return; } 
         if(cart.length===0){ showToast(t("cartEmptyMsg"), true); return; } 
-        if(!fullAddress.city || !fullAddress.line1){ 
-            showToast("Please add your complete address with landmark", true); 
-            openLocationModal(); 
-            return; 
-        }
+        if(!fullAddress.city || !locationValid){ showToast(t("locationRequired"), true); openLocationModal(); return; } 
         let total=cart.reduce((s,i)=>s+i.price*i.qty,0); 
-        let addressPreview = getFormattedAddress();
-        document.getElementById("paymentSummary").innerHTML=`<div class="delivery-address-preview"><strong>📍 Delivery Address:</strong><br>${addressPreview}<br>📞 ${fullAddress.phone || currentUser?.mobile || "Not provided"}</div><strong>Total: ₹${total}</strong><br>FREE Express Delivery`; 
+        document.getElementById("paymentSummary").innerHTML=`<strong>📍 ${getFormattedAddress()}</strong><br>Total: ₹${total}<br>FREE Express Delivery`; 
         document.getElementById("paymentModal").classList.add("active"); 
     }
     
@@ -1024,22 +986,15 @@
         let totalAmt=cart.reduce((s,i)=>s+i.price*i.qty,0); 
         let orderId="EC"+Date.now().toString().slice(-8); 
         let itemText=cart.map(i=>`${i.name} x${i.qty} = ₹${i.price*i.qty}`).join("\n"); 
-        let fullAddr = getFormattedAddress();
-        let deliveryPhone = fullAddress.phone || currentUser.mobile || "Not provided";
-        let newOrder={id:orderId,userId:currentUser.id,items:cart.map(i=>({name:i.name,price:i.price,qty:i.qty})),total:totalAmt,date:new Date().toLocaleString(),address:fullAddr,trackingStep:1}; 
+        let newOrder={id:orderId,userId:currentUser.id,items:cart.map(i=>({name:i.name,price:i.price,qty:i.qty})),total:totalAmt,date:new Date().toLocaleString(),location:fullAddress.city,landmark:fullAddress.landmark,fullAddress:getFormattedAddress(),trackingStep:1}; 
         orders.push(newOrder); localStorage.setItem("userOrders",JSON.stringify(orders)); 
         
         await sendOrderToWhatsApp({
-            orderId: orderId,
-            customerName: currentUser.name,
-            customerPhone: deliveryPhone,
-            itemsList: itemText,
-            total: totalAmt,
-            address: fullAddr,
-            paymentMethod: selectedMethod === "upi" ? "UPI" : "Cash on Delivery"
+            orderId: orderId, customerName: currentUser.name, customerPhone: currentUser.mobile || "Not Provided",
+            itemsList: itemText, total: totalAmt, fullAddr: getFormattedAddress(), paymentMethod: selectedMethod === "upi" ? "UPI" : "Cash on Delivery"
         });
         
-        sendEmailOrder(orderId, currentUser.name, currentUser.mobile || currentUser.email || "Customer", itemText, totalAmt, fullAddr);
+        updateStockAfterOrder(cart);
         cart=[]; updateCart(); toggleCart(); closePaymentModal(); 
         showToast(`✅ ${t("orderPlaced")}`,false); showOrderTracking(orderId); 
     };
@@ -1058,60 +1013,75 @@
     
     function closePaymentModal(){ document.getElementById("paymentModal").classList.remove("active"); }
     function closeTrackModal(){ document.getElementById("trackModal").classList.remove("active"); }
+    function isLocationServiceable(loc){ return allIndianLocations.some(l=>l.toLowerCase()===loc.toLowerCase()); }
     
-    function setUserLocation(loc){ 
-        // Legacy compatibility - but we use full address now
-        userLocation = loc; 
-        locationValid = allIndianLocations.some(l=>l.toLowerCase()===loc.toLowerCase()); 
-        localStorage.setItem("userDeliveryLocation",userLocation); 
-        localStorage.setItem("locationValid",locationValid); 
-        updateDeliveryBanner(); 
+    function updateDeliveryBanner(){ 
+        let msg=document.getElementById("deliveryMsg"); 
+        let locSpan=document.getElementById("locationLabel"); 
+        if(fullAddress.city && locationValid){ 
+            let shortAddr = fullAddress.landmark ? `${fullAddress.city.substring(0,8)}...` : fullAddress.city.substring(0,10);
+            msg.innerHTML=`${t("deliveryMsg")} • ${shortAddr} • 15 MIN`; 
+            locSpan.innerHTML=shortAddr; 
+        } else { 
+            msg.innerHTML=t("deliveryMsg"); 
+            locSpan.innerHTML=t("locationLabel"); 
+        } 
     }
     
-    function openLocationModal(){ 
-        loadSavedAddress();
-        document.getElementById("locationModal").classList.add("active"); 
-        renderLocationSuggestions(); 
-    }
-    function closeLocationModal(){ document.getElementById("locationModal").classList.remove("active"); }
-    function renderLocationSuggestions(){ 
-        let suggDiv=document.getElementById("locationSuggestions"); 
-        suggDiv.innerHTML=allIndianLocations.map(loc=>`<div class="loc-chip" onclick="document.getElementById('cityInput').value='${loc}';">📍 ${loc}</div>`).join(''); 
-    }
-    
-    document.getElementById("saveLocationBtn").onclick=()=>{ saveFullAddress(); };
-    document.getElementById("useCurrentLocationBtn").onclick=()=>{ 
-        if(navigator.geolocation){ 
-            navigator.geolocation.getCurrentPosition(pos=>{ 
-                fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`).then(r=>r.json()).then(data=>{ 
-                    let city=data.address?.city||data.address?.town||"Delhi";
-                    document.getElementById("cityInput").value = city;
-                    showToast(`City set to ${city}. Please complete address.`, false);
-                }).catch(()=>{ document.getElementById("cityInput").value = "Delhi"; }); 
-            }); 
-        } else showToast("Enable location",true); 
-    };
-    
-    // Auth functions (simplified for brevity - keep existing logic)
-    function updateUserName(newName) { if(!currentUser) return false; currentUser.name = newName.trim(); let userIndex = users.findIndex(u => u.id === currentUser.id); if(userIndex !== -1) users[userIndex].name = newName.trim(); localStorage.setItem("ecomUsers", JSON.stringify(users)); localStorage.setItem("currentUser", JSON.stringify(currentUser)); updateUI(); showToast(t("nameUpdated"), false); return true; }
-    function renderAuthModal() { let modalDiv=document.getElementById("authModalContent"); modalDiv.innerHTML=`<h2><i class="fas fa-mobile-alt"></i> ${t("loginTitle")}</h2><input type="tel" id="mobileInput" placeholder="${t("mobileNumber")} (10 digits)" maxlength="10"><div id="usernameSection" class="username-section" style="display:none;"><label>${t("enterUsername")}</label><input type="text" id="usernameInput" placeholder="Your Name"></div><button id="sendOtpBtn" class="btn-primary">${t("sendOtp")}</button><div id="otpSection" style="display:none;"><input type="text" id="otpCode" placeholder="${t("enterOtp")}" maxlength="6"><button id="verifyOtpBtn" class="btn-primary">${t("verifyOtp")}</button><div id="resendOtp" style="margin-top:8px;color:#ff7a18;cursor:pointer;">${t("resendOtp")}</div></div><button onclick="closeAuthModal()" class="btn-outline">${t("cancel")}</button>`; let mobileInput = document.getElementById("mobileInput"); let usernameSection = document.getElementById("usernameSection"); mobileInput.addEventListener("input", function() { let existingUser = users.find(u => u.mobile === this.value.trim()); if(existingUser) usernameSection.style.display = "none"; else if(this.value.length === 10) usernameSection.style.display = "block"; else usernameSection.style.display = "none"; }); document.getElementById("sendOtpBtn").onclick = async()=>{ let mobile = document.getElementById("mobileInput").value.trim(); if(!mobile || mobile.length !== 10) { showToast("Enter valid mobile", true); return; } let existingUser = users.find(u => u.mobile === mobile); if(!existingUser) { let username = document.getElementById("usernameInput")?.value.trim(); tempOtpData.tempUsername = username && username.length > 0 ? username : null; } else { tempOtpData.tempUsername = null; } let result = await sendRealOTP(mobile); if(result.success) { document.getElementById("otpSection").style.display = "block"; document.getElementById("resendOtp").onclick = arguments.callee; tempOtpData.identifier = mobile; } }; document.getElementById("verifyOtpBtn")?.addEventListener("click", async()=>{ let enteredOtp = document.getElementById("otpCode").value.trim(); let mobile = document.getElementById("mobileInput").value.trim(); if(!tempOtpData.otp) { let stored = localStorage.getItem("pendingOtp"); if(stored) tempOtpData = JSON.parse(stored); } if(!tempOtpData.otp || tempOtpData.identifier !== mobile || Date.now() > tempOtpData.expiry || enteredOtp !== tempOtpData.otp) { showToast(t("invalidOtp"), true); return; } let existingUser = users.find(u => u.mobile === mobile); if(existingUser) currentUser = existingUser; else { let userName = tempOtpData.tempUsername || "User_" + mobile.slice(-4); let newUser = { id: Date.now(), name: userName.trim(), mobile: mobile, email: mobile + "@user.com" }; users.push(newUser); localStorage.setItem("ecomUsers", JSON.stringify(users)); currentUser = newUser; } localStorage.setItem("currentUser", JSON.stringify(currentUser)); localStorage.removeItem("pendingOtp"); tempOtpData = { otp: null, identifier: null, expiry: null, tempUsername: null }; updateUI(); closeAuthModal(); showToast(`${t("welcome")} ${currentUser.name}`, false); renderProducts(); updateCart(); if(fullAddress.phone && !currentUser.mobile && mobile) { currentUser.mobile = mobile; localStorage.setItem("currentUser", JSON.stringify(currentUser)); } }); }
-    function showProfileModal() { let userOrders = orders.filter(o => o.userId === currentUser.id).reverse(); let html = `<h2><i class="fas fa-user-circle"></i> ${currentUser.name} <button class="edit-name-btn" onclick="toggleNameEdit()"><i class="fas fa-pen"></i> ${t("editName")}</button></h2><div class="profile-nav"><button class="profile-nav-btn active" onclick="renderProfileContent('profile')">📋 ${t("profile")}</button><button class="profile-nav-btn" onclick="renderProfileContent('orders')">📦 ${t("myOrders")} <span class="badge">${userOrders.length}</span></button></div><div class="profile-lang-switch"><button class="profile-lang-btn ${currentLang === 'hi' ? 'active-lang' : ''}" onclick="setLanguage('hi'); showProfileModal();">🇮🇳 हिंदी</button><button class="profile-lang-btn ${currentLang === 'en' ? 'active-lang' : ''}" onclick="setLanguage('en'); showProfileModal();">🇬🇧 English</button></div><div id="profileDynamicContent"></div>`; document.getElementById("authModalContent").innerHTML = html; renderProfileContent('profile'); document.getElementById("authModal").classList.add("active"); }
-    function toggleNameEdit() { let nameSpan = document.querySelector("#authModalContent h2"); let currentName = currentUser.name; if(!isEditingName) { nameSpan.innerHTML = `<i class="fas fa-user-circle"></i> <input type="text" id="editNameInput" value="${currentName}" style="width:auto;display:inline-block;padding:5px;"> <button class="btn-primary" style="display:inline-block;width:auto;padding:5px 15px;" onclick="saveNameEdit()">${t("saveName")}</button> <button class="btn-outline" style="display:inline-block;width:auto;padding:5px 15px;" onclick="cancelNameEdit()">${t("cancelEdit")}</button>`; isEditingName = true; } }
-    function saveNameEdit() { let newName = document.getElementById("editNameInput")?.value.trim(); if(newName) { updateUserName(newName); isEditingName = false; showProfileModal(); } else showToast("Enter valid name", true); }
-    function cancelNameEdit() { isEditingName = false; showProfileModal(); }
-    function renderProfileContent(tab) { let userOrders = orders.filter(o => o.userId === currentUser.id).reverse(); let contentDiv = document.getElementById("profileDynamicContent"); let btns = document.querySelectorAll(".profile-nav-btn"); btns.forEach(btn => btn.classList.remove("active")); btns[tab === 'profile' ? 0 : 1].classList.add("active"); if(tab === 'profile') { let addrPreview = getFormattedAddress() || "Not added"; contentDiv.innerHTML = `<div><p><i class="fas fa-user"></i> <strong>${currentUser.name}</strong></p><p><i class="fas fa-phone"></i> ${currentUser.mobile || "—"}</p><p><i class="fas fa-map-marker-alt"></i> ${addrPreview}</p><button id="logoutBtn" class="btn-outline">${t("logout")}</button></div>`; document.getElementById("logoutBtn")?.addEventListener("click",()=>{ currentUser=null; localStorage.removeItem("currentUser"); cart=[]; updateCart(); updateUI(); closeAuthModal(); showToast(t("logout"),false); renderProducts(); }); } else { if(userOrders.length === 0) contentDiv.innerHTML = `<div style="text-align:center;padding:40px;"><p>${t("noOrders")}</p><button onclick="closeAuthModal()" class="btn-primary">${t("startShopping")}</button></div>`; else contentDiv.innerHTML = `<div><h3>${t("orders")} (${userOrders.length})</h3>` + userOrders.map(o => `<div class="order-item" onclick="showOrderTracking('${o.id}'); closeAuthModal();"><strong>🆔 ${o.id}</strong><div>📦 ${o.items.reduce((s,i)=>s+i.qty,0)} items | ₹${o.total}</div><div>📅 ${o.date}</div></div>`).join('') + `</div><button onclick="closeAuthModal()" class="btn-primary">${t("close")}</button>`; } }
+    // Auth Functions (keeping existing logic)
+    function updateUI(){ document.getElementById("profileLabel").innerHTML=currentUser?currentUser.name:t("profileLabel"); updateDeliveryBanner(); }
     function openAuthModal() { if(currentUser) showProfileModal(); else { renderAuthModal(); document.getElementById("authModal").classList.add("active"); } }
     function closeAuthModal(){ document.getElementById("authModal").classList.remove("active"); }
-    function updateUI(){ document.getElementById("profileLabel").innerHTML=currentUser?currentUser.name:t("profileLabel"); updateDeliveryBanner(); }
+    
+    function renderAuthModal() { 
+        let modalDiv=document.getElementById("authModalContent"); 
+        modalDiv.innerHTML=`<h2><i class="fas fa-mobile-alt"></i> ${t("loginTitle")}</h2><input type="tel" id="mobileInput" placeholder="${t("mobileNumber")} (10 digits)" maxlength="10"><div id="usernameSection" class="username-section" style="display:none;"><label>${t("enterUsername")}</label><input type="text" id="usernameInput" placeholder="Your Name"><small>${t("usernameHelp")}</small></div><button id="sendOtpBtn" class="btn-primary">${t("sendOtp")}</button><div id="otpSection" style="display:none;"><input type="text" id="otpCode" placeholder="${t("enterOtp")}" maxlength="6"><button id="verifyOtpBtn" class="btn-primary">${t("verifyOtp")}</button><div id="resendOtp" style="display:none;">${t("resendOtp")}</div></div><button onclick="closeAuthModal()" class="btn-outline">${t("cancel")}</button>`;
+        let mobileInput = document.getElementById("mobileInput");
+        mobileInput.addEventListener("input", function() { let existingUser = users.find(u => u.mobile === this.value.trim()); document.getElementById("usernameSection").style.display = (existingUser || this.value.length !== 10) ? "none" : "block"; });
+        document.getElementById("sendOtpBtn").onclick = async()=>{ let mobile = document.getElementById("mobileInput").value.trim(); if(!mobile || mobile.length !== 10) { showToast("Enter valid 10-digit mobile", true); return; } let existingUser = users.find(u => u.mobile === mobile); if(!existingUser) { let username = document.getElementById("usernameInput")?.value.trim(); tempOtpData.tempUsername = username && username.length > 0 ? username : null; } else tempOtpData.tempUsername = null; let result = await sendRealOTP(mobile); if(result.success) { document.getElementById("otpSection").style.display = "block"; document.getElementById("resendOtp").style.display = "block"; document.getElementById("resendOtp").onclick = () => sendRealOTP(mobile); tempOtpData.identifier = mobile; } };
+        document.getElementById("verifyOtpBtn")?.addEventListener("click", async()=>{ let enteredOtp = document.getElementById("otpCode").value.trim(); let mobile = document.getElementById("mobileInput").value.trim(); if(!tempOtpData.otp) { let stored = localStorage.getItem("pendingOtp"); if(stored) tempOtpData = JSON.parse(stored); } if(!tempOtpData.otp || tempOtpData.identifier !== mobile || Date.now() > tempOtpData.expiry || enteredOtp !== tempOtpData.otp) { showToast(t("invalidOtp"), true); return; } let existingUser = users.find(u => u.mobile === mobile); if(existingUser) currentUser = existingUser; else { let userName = tempOtpData.tempUsername || "User_" + mobile.slice(-4); let newUser = { id: Date.now(), name: userName.trim(), mobile: mobile, email: mobile + "@user.com" }; users.push(newUser); localStorage.setItem("ecomUsers", JSON.stringify(users)); currentUser = newUser; } localStorage.setItem("currentUser", JSON.stringify(currentUser)); localStorage.removeItem("pendingOtp"); tempOtpData = {}; updateUI(); closeAuthModal(); showToast(`${t("welcome")} ${currentUser.name}`, false); renderProducts(); updateCart(); });
+    }
+    
+    function showProfileModal() { 
+        let userOrders = orders.filter(o => o.userId === currentUser.id).reverse();
+        let html = `<h2><i class="fas fa-user-circle"></i> ${currentUser.name} <button class="edit-name-btn" onclick="toggleNameEdit()"><i class="fas fa-pen"></i> ${t("editName")}</button></h2><div class="profile-nav"><button class="profile-nav-btn active" onclick="renderProfileContent('profile')">📋 ${t("profile")}</button><button class="profile-nav-btn" onclick="renderProfileContent('orders')">📦 ${t("myOrders")} <span class="badge">${userOrders.length}</span></button></div><div class="profile-lang-switch"><button class="profile-lang-btn ${currentLang === 'hi' ? 'active-lang' : ''}" onclick="setLanguage('hi'); showProfileModal();">🇮🇳 हिंदी</button><button class="profile-lang-btn ${currentLang === 'en' ? 'active-lang' : ''}" onclick="setLanguage('en'); showProfileModal();">🇬🇧 English</button></div><div id="profileDynamicContent"></div>`;
+        document.getElementById("authModalContent").innerHTML = html;
+        renderProfileContent('profile');
+        document.getElementById("authModal").classList.add("active");
+    }
+    
+    function toggleNameEdit() { isEditingName = true; let nameSpan = document.querySelector("#authModalContent h2"); nameSpan.innerHTML = `<i class="fas fa-user-circle"></i> <input type="text" id="editNameInput" value="${currentUser.name}" style="width:auto;padding:5px 10px;"> <button class="btn-primary" style="display:inline-block;width:auto;padding:5px 15px;" onclick="saveNameEdit()">${t("saveName")}</button> <button class="btn-outline" style="display:inline-block;width:auto;padding:5px 15px;" onclick="cancelNameEdit()">${t("cancelEdit")}</button>`; }
+    function saveNameEdit() { let newName = document.getElementById("editNameInput")?.value.trim(); if(newName && newName !== "") { currentUser.name = newName; let userIndex = users.findIndex(u => u.id === currentUser.id); if(userIndex !== -1) { users[userIndex].name = newName; localStorage.setItem("ecomUsers", JSON.stringify(users)); } localStorage.setItem("currentUser", JSON.stringify(currentUser)); updateUI(); showToast(t("nameUpdated"), false); isEditingName = false; showProfileModal(); } else showToast("Please enter a valid name", true); }
+    function cancelNameEdit() { isEditingName = false; showProfileModal(); }
+    
+    function renderProfileContent(tab) {
+        let userOrders = orders.filter(o => o.userId === currentUser.id).reverse();
+        let contentDiv = document.getElementById("profileDynamicContent");
+        if(tab === 'profile') {
+            contentDiv.innerHTML = `<div><p style="background:#fff0e6; padding:12px; border-radius:20px;"><i class="fas fa-user"></i> <strong>${currentUser.name}</strong></p><p style="background:#fff0e6; padding:12px; border-radius:20px;"><i class="fas fa-phone"></i> ${currentUser.mobile || "—"}</p><p style="background:#fff0e6; padding:12px; border-radius:20px;"><i class="fas fa-map-marker-alt"></i> ${getFormattedAddress()}</p><button id="logoutBtn" class="btn-outline">${t("logout")}</button></div>`;
+            document.getElementById("logoutBtn")?.addEventListener("click",()=>{ currentUser=null; localStorage.removeItem("currentUser"); cart=[]; updateCart(); updateUI(); closeAuthModal(); showToast(t("logout"),false); renderProducts(); });
+        } else {
+            if(userOrders.length === 0) contentDiv.innerHTML = `<div style="text-align:center; padding:40px;"><i class="fas fa-shopping-bag" style="font-size:3rem; color:#ff7a18;"></i><p>${t("noOrders")}</p><button onclick="closeAuthModal()" class="btn-primary">${t("startShopping")}</button></div>`;
+            else contentDiv.innerHTML = `<div><h3>${t("orders")} (${userOrders.length})</h3>` + userOrders.map(o => `<div class="order-item" onclick="showOrderTracking('${o.id}'); closeAuthModal();"><strong>🆔 ${o.id}</strong><div>📦 ${o.items.reduce((s,i)=>s+i.qty,0)} items | ₹${o.total}</div><div>📍 ${o.fullAddress || o.location}</div><div>📅 ${o.date}</div></div>`).join('') + `</div><button onclick="closeAuthModal()" class="btn-primary">${t("close")}</button>`;
+        }
+    }
+    
+    function openLocationModal(){ document.getElementById("locationModal").classList.add("active"); renderLocationSuggestions(); loadFullAddress(); }
+    function closeLocationModal(){ document.getElementById("locationModal").classList.remove("active"); }
+    function renderLocationSuggestions(){ let suggDiv=document.getElementById("locationSuggestions"); suggDiv.innerHTML=allIndianLocations.map(loc=>`<div class="loc-chip" onclick="document.getElementById('locationInput').value='${loc}';">${loc}</div>`).join(''); }
+    document.getElementById("saveLocationBtn").onclick=()=>{ saveFullAddress(); };
+    document.getElementById("useCurrentLocationBtn").onclick=()=>{ if(navigator.geolocation){ navigator.geolocation.getCurrentPosition(pos=>{ fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`).then(r=>r.json()).then(data=>{ let city=data.address?.city||data.address?.town||"Delhi"; document.getElementById("locationInput").value=city; saveFullAddress(); }).catch(()=>{ saveFullAddress(); }); }); } else showToast("Enable location",true); };
     
     document.getElementById("searchInput").addEventListener("input",handleSearch);
     document.getElementById("openLocationModalBtn").onclick=openLocationModal;
     document.getElementById("profileBtn").onclick=openAuthModal;
     document.getElementById("cartToggleBtn").onclick=toggleCart;
     document.getElementById("wishlistBtn").onclick=toggleWishlist;
-    if(localStorage.getItem("userDeliveryLocation")){ userLocation=localStorage.getItem("userDeliveryLocation"); locationValid=localStorage.getItem("locationValid")==="true"; loadSavedAddress(); }
-    window.onclick=(e)=>{ if(e.target.classList.contains("modern-modal")){ e.target.classList.remove("active"); } };
-    setLanguage(currentLang);
+    
+    let storedStock = localStorage.getItem("productStock");
+    if(storedStock) productStock = JSON.parse(storedStock); else initStock();
+    loadFullAddress();
+    setLanguage(localStorage.getItem("appLanguage") || "en");
     renderCategories(); renderProducts(); updateCart(); updateUI(); document.getElementById("wishlistCount").innerText=wishlist.length;
 </script>
 </body>
